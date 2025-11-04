@@ -32,7 +32,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.REGISTRY_URL }}/arv-live/obs-docker:latest
-            ${{ secrets.REGISTRY_URL }}/arv-live/obs-docker:${{ github.sha }}
-          cache-from: type=registry,ref=${{ secrets.REGISTRY_URL }}/arv-live/obs-docker:buildcache
-          cache-to: type=registry,ref=${{ secrets.REGISTRY_URL }}/arv-live/obs-docker:buildcache,mode=max
+            ${{ secrets.REGISTRY_URL }}/arv-live/srtla:latest
+            ${{ secrets.REGISTRY_URL }}/arv-live/srtla:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.REGISTRY_URL }}/arv-live/srtla:buildcache
+          cache-to: type=registry,ref=${{ secrets.REGISTRY_URL }}/arv-live/srtla:buildcache,mode=max
