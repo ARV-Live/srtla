@@ -24,7 +24,7 @@ RUN mkdir build && cd build && \
     cmake .. && \
     make
 
-EXPOSE 5000
+EXPOSE 5000/udp
 
 # Set the entry point for the container
 ENTRYPOINT ["./build/srtla_rec"]
