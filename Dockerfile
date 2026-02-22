@@ -1,10 +1,10 @@
-FROM ubuntu:24.04
+FROM alpine:latest
 
 # Install necessary packages
-RUN apt-get update && apt-get install -y \
-    build-essential \
+RUN apk add --no-cache \
+    build-base \
     cmake \
-    libspdlog-dev \
+    spdlog-dev \
     python3 \
     git
 
