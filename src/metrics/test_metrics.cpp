@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
+#include <string>
 
 #include "prometheus.h"
 
@@ -41,6 +42,11 @@ int main() {
     // One HELP per metric name, even with several label variants.
     assert(body.find("# HELP srtla_groups_removed_total") ==
            body.rfind("# HELP srtla_groups_removed_total"));
+
+    // Must be a unix timestamp, not the monotonic clock the receiver runs on,
+    // or "time() - start" reads as decades of uptime.
+    size_t at = body.find("\nsrtla_start_time_seconds ") + 26;
+    assert(std::stoll(body.substr(at, body.find('\n', at) - at)) > 1700000000LL);
 
     metrics::inc(metrics::PACKETS_RECEIVED, 7);
     metrics::inc(metrics::GROUPS_REMOVED_EVICTED);

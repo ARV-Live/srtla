@@ -2,6 +2,7 @@
 
 #include <cerrno>
 #include <cstring>
+#include <ctime>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -139,7 +140,9 @@ Exporter::~Exporter() {
 
 bool Exporter::start(uint16_t port, int epoll_fd, bool detailed) {
     detailed_ = detailed;
-    get_seconds(&start_time_);
+    // Wall clock, not get_seconds(): the exposition convention is a unix
+    // timestamp, and get_seconds() returns CLOCK_MONOTONIC_COARSE.
+    start_time_ = ::time(nullptr);
 
     if (port == 0) {
         return false;
