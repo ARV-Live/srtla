@@ -19,15 +19,27 @@ inline constexpr int MAX_CONNS_PER_GROUP = 16;
 inline constexpr int MAX_GROUPS = 200;
 
 inline constexpr int CLEANUP_PERIOD = 3;
-inline constexpr int GROUP_TIMEOUT = 4;
-inline constexpr int CONN_TIMEOUT = 4;
+inline constexpr int GROUP_TIMEOUT = 30;
+// Groups that registered (REG1) but never forwarded real SRT data are reaped
+// aggressively. A legitimate broadcaster completes REG2 and starts the SRT
+// handshake within a fraction of a second, so this only targets the "ghost"
+// groups left behind by an unauthenticated REG1 flood (resource-exhaustion DoS).
+inline constexpr int PENDING_GROUP_TIMEOUT = 5;
+inline constexpr int CONN_TIMEOUT = 15;
 
 inline constexpr int KEEPALIVE_PERIOD = 1;
 inline constexpr int RECOVERY_CHANCE_PERIOD = 5;
 
+// Per-source-IP throttle for SRT authentication failures. srtla_rec relays the
+// SRT handshake but never authenticates itself; when the SRT server rejects a
+// handshake we count it against the source IP and refuse new registrations once
+// it crosses the threshold within the window. Tuned leniently so a mistyped
+// passphrase or several broadcasters behind one NAT are not locked out.
+inline constexpr int AUTH_FAIL_THRESHOLD = 5;  // failures within window to trip
+inline constexpr int AUTH_FAIL_WINDOW = 60;    // seconds
+inline constexpr int AUTH_FAIL_COOLDOWN = 60;  // seconds blocked once tripped
+
 inline constexpr int CONN_QUALITY_EVAL_PERIOD = 5;
-inline constexpr int ACK_THROTTLE_INTERVAL = 100; // milliseconds
-inline constexpr double MIN_ACK_RATE = 0.2;
 inline constexpr double MIN_ACCEPTABLE_TOTAL_BANDWIDTH_KBPS = 1000.0;
 inline constexpr int MAX_ERROR_POINTS = 40;
 inline constexpr double GOOD_CONNECTION_THRESHOLD = 0.5;
@@ -80,8 +92,6 @@ struct ConnectionStats {
   uint32_t last_packets_lost = 0;
   uint32_t error_points = 0;
   uint8_t weight_percent = WEIGHT_FULL;
-  uint64_t last_ack_sent_time = 0;
-  double ack_throttle_factor = 1.0;
   uint16_t nack_count = 0;
 
   // Sender-side telemetry from keepalive packets (when available)
@@ -110,7 +120,6 @@ struct ConnectionStats {
   // Legacy algorithm parallel tracking (for comparison mode only)
   uint32_t legacy_error_points = 0;
   uint8_t legacy_weight_percent = WEIGHT_FULL;
-  double legacy_ack_throttle_factor = 1.0;
 
   // Returns true if we have recent, valid sender telemetry to use for quality evaluation.
   // When false, the algorithm falls back to receiver-only metrics (bandwidth + packet loss).
