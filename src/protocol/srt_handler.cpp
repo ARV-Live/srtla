@@ -68,7 +68,11 @@ void SRTHandler::handle_srt_data(connection::ConnectionGroupPtr group) {
     bool failed_auth = is_srt_handshake_reject(buf, n) ||
                        (is_srt_shutdown(buf, n) && !group->is_established());
     if (failed_auth) {
-        rate_limiter_.record_failure(group->last_address(), ::time(nullptr));
+        // get_seconds(), not time(): is_blocked() and cleanup() are called with
+        // the monotonic clock, so a wall-clock blocked_until never expires.
+        time_t auth_ts = 0;
+        get_seconds(&auth_ts);
+        rate_limiter_.record_failure(group->last_address(), auth_ts);
         spdlog::warn("[Group: {}] SRT connection rejected before established; recorded auth failure",
                      static_cast<void *>(group.get()));
     }
