@@ -59,6 +59,8 @@ srtla_rec runs as a proxy between SRTla clients and an SRT server:
 - `--srt_port PORT`: Port of the downstream SRT server (default: 4001)
 - `--verbose`: Enable verbose logging (default: disabled)
 - `--debug`: Enable debug logging (default: disabled)
+- `--metrics_port PORT`: Serve Prometheus metrics over HTTP on this port (default: 0, disabled)
+- `--metrics_detail`: Also export per-connection metrics (default: disabled)
 
 ### Example
 
@@ -195,6 +197,21 @@ The following parameters can be adjusted to optimize behavior:
 ## SRT Configuration Recommendations
 
 The sender should implement congestion control using adaptive bitrate based on the SRT `SRTO_SNDDATA` size or measured RTT.
+
+## Monitoring
+
+With `--metrics_port 9997`, srtla_rec serves Prometheus text exposition over HTTP on that port (any path):
+
+```bash
+./srtla_rec --metrics_port 9997 [--metrics_detail]
+curl http://127.0.0.1:9997/metrics
+```
+
+The endpoint is served from the main epoll loop, so there is no extra thread and no locking. Bind it behind a firewall — there is no authentication.
+
+Always exported: traffic counters (`srtla_packets_received_total`, `srtla_forwarded_packets_total`, `srtla_srt_packets_received_total`, …), registration outcomes (`srtla_group_registrations_total`, `srtla_group_registrations_rejected_total{reason}`), teardowns (`srtla_groups_removed_total{reason}`), auth throttling (`srtla_auth_failures_total`, `srtla_auth_sources_blocked`), NAK handling, connection recovery, send errors, and live gauges for groups and connections. `srtla_packets_received_total / srtla_recv_batches_total` is the receive-loop fill ratio — a rising value means the loop is approaching saturation.
+
+`--metrics_detail` adds per-connection series (`srtla_conn_*`: bytes, packets, loss, weight, error points, RTT, window, in-flight, sender bitrate, idle time) labelled `group` (the group's local SRT port) and `remote` (the client address). This is the useful view for debugging bonding, but each reconnect produces a new `remote` label value, so keep an eye on series cardinality before enabling it on a busy receiver.
 
 ## Socket Information
 

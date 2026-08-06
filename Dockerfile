@@ -25,6 +25,7 @@ RUN mkdir build && cd build && \
     make
 
 EXPOSE 5000/udp
+EXPOSE 9997/tcp
 
 # Set the entry point for the container
 ENTRYPOINT ["./build/srtla_rec"]
