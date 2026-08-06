@@ -211,6 +211,8 @@ The endpoint is served from the main epoll loop, so there is no extra thread and
 
 Always exported: traffic counters (`srtla_packets_received_total`, `srtla_forwarded_packets_total`, `srtla_srt_packets_received_total`, …), registration outcomes (`srtla_group_registrations_total`, `srtla_group_registrations_rejected_total{reason}`), teardowns (`srtla_groups_removed_total{reason}`), auth throttling (`srtla_auth_failures_total`, `srtla_auth_sources_blocked`), NAK handling, connection recovery, send errors, and live gauges for groups and connections. `srtla_packets_received_total / srtla_recv_batches_total` is the receive-loop fill ratio — a rising value means the loop is approaching saturation.
 
+A Grafana dashboard covering every exported metric ships in [`docs/grafana-dashboard.json`](docs/grafana-dashboard.json) — import it and select your Prometheus data source. The per-connection panels sit in a collapsed row at the bottom and stay empty unless `--metrics_detail` is on.
+
 `--metrics_detail` adds per-connection series (`srtla_conn_*`: bytes, packets, loss, weight, error points, RTT, window, in-flight, sender bitrate, idle time) labelled `group` (the group's local SRT port) and `remote` (the client address). This is the useful view for debugging bonding, but each reconnect produces a new `remote` label value, so keep an eye on series cardinality before enabling it on a busy receiver.
 
 ## Socket Information
